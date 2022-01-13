@@ -261,9 +261,11 @@ const Lightbox = (($) => {
 				type = 'vimeo';
 			if(!type && this._getInstagramId(src))
 				type = 'instagram';
+			if(!type && this._isPDF(src)) 
+				type = 'pdf';
 			if(type == 'audio' || type == 'video' || (!type && this._isMedia(src)))
 				type = 'media';
-			if(!type || ['image', 'youtube', 'vimeo', 'instagram', 'media', 'url'].indexOf(type) < 0)
+			if(!type || ['image', 'youtube', 'vimeo', 'instagram', 'media', 'url', 'pdf'].indexOf(type) < 0)
 				type = 'url';
 
 			return type;
@@ -285,6 +287,10 @@ const Lightbox = (($) => {
 
 		_isMedia(string) {
 			return string && string.match(/(\.(mp3|mp4|ogg|webm|wav)((\?|#).*)?$)/i)
+		}
+
+		_isPDF(string) {
+			return string && string.match(/(\.(pdf)((\?|#).*)?$)/i)
 		}
 
 		_containerToUse() {
@@ -317,7 +323,7 @@ const Lightbox = (($) => {
 			let currentRemote = this._$element.attr('data-remote') || this._$element.attr('href')
 			let currentType = this._detectRemoteType(currentRemote, this._$element.attr('data-type') || false)
 
-			if(['image', 'youtube', 'vimeo', 'instagram', 'media', 'url'].indexOf(currentType) < 0)
+			if(['image', 'youtube', 'vimeo', 'instagram', 'media', 'url', 'pdf'].indexOf(currentType) < 0)
 				return this._error(this._config.strings.type)
 
 			switch(currentType) {
@@ -337,6 +343,9 @@ const Lightbox = (($) => {
 				case 'media':
 					this._showHtml5Media(currentRemote, $toUse);
 					break;
+                        	case 'pdf':
+                            		this._loadPDF(currentRemote, $toUse);
+                            		break;
 				default: // url
 					this._loadRemoteContent(currentRemote, $toUse);
 					break;
@@ -514,7 +523,20 @@ const Lightbox = (($) => {
 			this._resize(width, height);
 			return this;
 		}
-
+		
+		_loadPDF(url, $containerForElement) {
+                    var width = this._$element.data('width') || 1920;
+                    var height = this._$element.data('height') || 1200;
+    
+                    this._toggleLoading(false);
+    
+                    $containerForElement.html('<embed src="' + url + '" height="100%" width="100%" type="application/pdf"></embed>');
+                    this._config.onContentLoaded.call(this);
+    
+                    this._resize(width, height);
+                    return this;                   
+                }
+		
 		_isExternal(url) {
 			let match = url.match(/^([^:\/?#]+:)?(?:\/\/([^\/?#]*))?([^?#]+)?(\?[^#]*)?(#.*)?/);
 			if (typeof match[1] === "string" && match[1].length > 0 && match[1].toLowerCase() !== location.protocol)
